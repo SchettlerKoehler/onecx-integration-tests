@@ -32,7 +32,8 @@ class StubPlatformRuntime implements PlatformRuntime {
   constructor(
     private readonly e2eRecords: E2eExecutionRecord[] | undefined,
     private readonly configValid = true,
-    private readonly resolvedImages: Record<string, string> = {}
+    private readonly resolvedImages: Record<string, string> = {},
+    private readonly startError?: string
   ) {}
 
   hasValidatedConfig(): boolean {
@@ -54,6 +55,9 @@ class StubPlatformRuntime implements PlatformRuntime {
 
   async startContainers(): Promise<void> {
     this.callOrder.push('startContainers')
+    if (this.startError) {
+      throw new Error(this.startError)
+    }
   }
 
   async exportPlatformInfo(): Promise<void> {
@@ -162,5 +166,31 @@ describe('IntegrationTestsRunner E2E sequencing', () => {
     expect(summary.configPath).toBe('integration/platform.json')
     expect(summary.runnerVersion).toBe(RunnerVersion.get())
     expect(summary.resolvedImages).toEqual(resolvedImages)
+  })
+
+  it('exits non-zero with status error when a strict image override fails during platform startup', async () => {
+    const overrideError = 'Explicitly requested image override is not available: my-override/image:1.0'
+    const runtime = new StubPlatformRuntime(undefined, true, {}, overrideError)
+    const runner = new IntegrationTestsRunner(
+      {
+        verbose: false,
+        dryRun: false,
+        captureLogsToFile: false,
+        help: false,
+        configPath: 'integration/platform.json',
+      },
+      () => runtime
+    )
+
+    const exitCode = await runner.run()
+
+    expect(exitCode).toBe(1)
+    expect(runtime.callOrder).toContain('stopAllContainers')
+    expect(runtime.callOrder).not.toContain('startE2eContainers')
+
+    const summary = writeSummaryMock.mock.calls[0][0] as RunSummary
+    expect(summary.exitCode).toBe(1)
+    expect(summary.status).toBe('error')
+    expect(summary.configPath).toBe('integration/platform.json')
   })
 })

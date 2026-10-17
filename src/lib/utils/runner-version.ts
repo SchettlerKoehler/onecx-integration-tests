@@ -30,9 +30,8 @@ export class RunnerVersion {
           if (manifest.name === PACKAGE_NAME) {
             return manifest.version ?? 'unknown'
           }
-        } catch (error) {
+        } catch {
           // Ignore an unreadable manifest and keep walking up.
-          void error
         }
       }
 
