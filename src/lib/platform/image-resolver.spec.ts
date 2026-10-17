@@ -111,8 +111,8 @@ describe('ImageResolver', () => {
       expect(ImagePullChecker.verifyImagePull).toHaveBeenCalledWith(overrideImage)
     })
 
-    it('should return default image if override is available but not verified', async () => {
-      (ImagePullChecker.verifyImagePull as jest.Mock).mockResolvedValueOnce(false)
+    it('should throw when an explicitly requested override is not available', async () => {
+      (ImagePullChecker.verifyImagePull as jest.Mock).mockResolvedValue(false)
       const config: PlatformConfig = {
         platformOverrides: {
           core: {
@@ -122,13 +122,11 @@ describe('ImageResolver', () => {
           },
         },
       }
-      const result = await resolver.getPostgresImage(config)
-      expect(result).toBe(postgresImage)
-      expect(ImagePullChecker.verifyImagePull).toHaveBeenCalledWith(overrideImage)
-      expect(warningMock).toHaveBeenCalledWith(
-        'IMAGE_VERIFY_FAILED',
-        `${overrideImage} -> ${postgresImage}`,
+      await expect(resolver.getPostgresImage(config)).rejects.toThrow(
+        `Explicitly requested image override is not available: ${overrideImage}`
       )
+      expect(ImagePullChecker.verifyImagePull).toHaveBeenCalledWith(overrideImage)
+      expect(resolver.getResolvedImages()[postgresImage]).toBeUndefined()
     })
 
     it('should return default image if no override is available and verified', async () => {
@@ -176,8 +174,8 @@ describe('ImageResolver', () => {
       expect(ImagePullChecker.verifyImagePull).toHaveBeenCalledWith(overrideImage)
     })
 
-    it('should return default image if override is available but not verified', async () => {
-      (ImagePullChecker.verifyImagePull as jest.Mock).mockResolvedValueOnce(false)
+    it('should throw when an explicitly requested override is not available', async () => {
+      (ImagePullChecker.verifyImagePull as jest.Mock).mockResolvedValue(false)
       const config: PlatformConfig = {
         platformOverrides: {
           core: {
@@ -187,13 +185,11 @@ describe('ImageResolver', () => {
           },
         },
       }
-      const result = await resolver.getKeycloakImage(config)
-      expect(result).toBe('quay.io/keycloak/keycloak:23.0.4')
-      expect(ImagePullChecker.verifyImagePull).toHaveBeenCalledWith(overrideImage)
-      expect(warningMock).toHaveBeenCalledWith(
-        'IMAGE_VERIFY_FAILED',
-        `${overrideImage} -> ${keycloakImage}`,
+      await expect(resolver.getKeycloakImage(config)).rejects.toThrow(
+        `Explicitly requested image override is not available: ${overrideImage}`
       )
+      expect(ImagePullChecker.verifyImagePull).toHaveBeenCalledWith(overrideImage)
+      expect(resolver.getResolvedImages()[keycloakImage]).toBeUndefined()
     })
 
     it('should return default image if no override is available and verified', async () => {
@@ -241,8 +237,8 @@ describe('ImageResolver', () => {
       expect(ImagePullChecker.verifyImagePull).toHaveBeenCalledWith(overrideImage)
     })
 
-    it('should return default image if override is available but not verified', async () => {
-      (ImagePullChecker.verifyImagePull as jest.Mock).mockResolvedValueOnce(false)
+    it('should throw when an explicitly requested override is not available', async () => {
+      (ImagePullChecker.verifyImagePull as jest.Mock).mockResolvedValue(false)
       const config: PlatformConfig = {
         platformOverrides: {
           core: {
@@ -252,13 +248,11 @@ describe('ImageResolver', () => {
           },
         },
       }
-      const result = await resolver.getImportManagerBaseImage(config)
-      expect(result).toBe(nodeImage)
-      expect(ImagePullChecker.verifyImagePull).toHaveBeenCalledWith(overrideImage)
-      expect(warningMock).toHaveBeenCalledWith(
-        'IMAGE_VERIFY_FAILED',
-        `${overrideImage} -> ${nodeImage}`,
+      await expect(resolver.getImportManagerBaseImage(config)).rejects.toThrow(
+        `Explicitly requested image override is not available: ${overrideImage}`
       )
+      expect(ImagePullChecker.verifyImagePull).toHaveBeenCalledWith(overrideImage)
+      expect(resolver.getResolvedImages()[nodeImage]).toBeUndefined()
     })
 
     it('should return default image if no override is available and verified', async () => {
@@ -303,16 +297,16 @@ describe('ImageResolver', () => {
       expect(ImagePullChecker.verifyImagePull).toHaveBeenCalledWith(overrideImage)
     })
 
-    it('should return default image if override is available but not verified', async () => {
+    it('should throw when an explicitly requested override is not available', async () => {
       (ImagePullChecker.verifyImagePull as jest.Mock).mockResolvedValue(false);
       (ContainerImageOverrideMapper.getServiceImageOverride as jest.Mock).mockReturnValue(overrideImage);
 
-      const result = await resolver.getServiceImage(serviceName as OnecxService, config)
-
-      expect(result).toBe(serviceName)
+      await expect(resolver.getServiceImage(serviceName as OnecxService, config)).rejects.toThrow(
+        `Explicitly requested image override is not available: ${overrideImage}`
+      )
       expect(ContainerImageOverrideMapper.getServiceImageOverride).toHaveBeenCalledWith(serviceName, config)
       expect(ImagePullChecker.verifyImagePull).toHaveBeenCalledWith(overrideImage)
-      expect(warningMock).toHaveBeenCalledWith('IMAGE_VERIFY_FAILED', `${overrideImage} -> ${serviceName}`)
+      expect(resolver.getResolvedImages()[serviceName]).toBeUndefined()
     })
 
     it('should return default image if no override is available and default is verified', async () => {
@@ -355,16 +349,16 @@ describe('ImageResolver', () => {
       expect(ImagePullChecker.verifyImagePull).toHaveBeenCalledWith(overrideImage)
     })
 
-    it('should return default image if override is available but not verified', async () => {
+    it('should throw when an explicitly requested override is not available', async () => {
       (ImagePullChecker.verifyImagePull as jest.Mock).mockResolvedValue(false);
       (ContainerImageOverrideMapper.getBffImageOverride as jest.Mock).mockReturnValue(overrideImage);
 
-      const result = await resolver.getBffImage(bffName as OnecxBff, config)
-
-      expect(result).toBe(bffName)
+      await expect(resolver.getBffImage(bffName as OnecxBff, config)).rejects.toThrow(
+        `Explicitly requested image override is not available: ${overrideImage}`
+      )
       expect(ContainerImageOverrideMapper.getBffImageOverride).toHaveBeenCalledWith(bffName, config)
       expect(ImagePullChecker.verifyImagePull).toHaveBeenCalledWith(overrideImage)
-      expect(warningMock).toHaveBeenCalledWith('IMAGE_VERIFY_FAILED', `${overrideImage} -> ${bffName}`)
+      expect(resolver.getResolvedImages()[bffName]).toBeUndefined()
     })
 
     it('should return default image if no override is available and default is verified', async () => {
@@ -407,16 +401,16 @@ describe('ImageResolver', () => {
       expect(ImagePullChecker.verifyImagePull).toHaveBeenCalledWith(overrideImage)
     })
 
-    it('should return default image if override is available but not verified', async () => {
+    it('should throw when an explicitly requested override is not available', async () => {
       (ImagePullChecker.verifyImagePull as jest.Mock).mockResolvedValue(false);
       (ContainerImageOverrideMapper.getUiImageOverride as jest.Mock).mockReturnValue(overrideImage);
 
-      const result = await resolver.getUiImage(uiName as OnecxUi, config)
-
-      expect(result).toBe(uiName)
+      await expect(resolver.getUiImage(uiName as OnecxUi, config)).rejects.toThrow(
+        `Explicitly requested image override is not available: ${overrideImage}`
+      )
       expect(ContainerImageOverrideMapper.getUiImageOverride).toHaveBeenCalledWith(uiName, config)
       expect(ImagePullChecker.verifyImagePull).toHaveBeenCalledWith(overrideImage)
-      expect(warningMock).toHaveBeenCalledWith('IMAGE_VERIFY_FAILED', `${overrideImage} -> ${uiName}`)
+      expect(resolver.getResolvedImages()[uiName]).toBeUndefined()
     })
 
     it('should return default image if no override is available and default is verified', async () => {
@@ -440,6 +434,60 @@ describe('ImageResolver', () => {
       expect(ContainerImageOverrideMapper.getUiImageOverride).toHaveBeenCalledWith(uiName, config)
       expect(ImagePullChecker.verifyImagePull).toHaveBeenCalledWith(uiName)
       expect(warningMock).toHaveBeenCalledWith('IMAGE_VERIFY_FAILED', `${undefined} -> ${uiName}`)
+    })
+  })
+
+  describe('getResolvedImages()', () => {
+    const overrideImage = 'my-custom-postgres:latest'
+    const postgresImage = 'docker.io/library/postgres:13.4'
+
+    it('records the resolved image when an available override is used', async () => {
+      (ImagePullChecker.verifyImagePull as jest.Mock).mockResolvedValue(true)
+      const config: PlatformConfig = {
+        platformOverrides: {
+          core: {
+            postgres: {
+              image: overrideImage,
+            },
+          },
+        },
+      }
+
+      await resolver.getPostgresImage(config)
+
+      expect(resolver.getResolvedImages()).toEqual({ [postgresImage]: overrideImage })
+    })
+
+    it('records no entry when an explicitly requested override is not available', async () => {
+      (ImagePullChecker.verifyImagePull as jest.Mock).mockResolvedValue(false)
+      const config: PlatformConfig = {
+        platformOverrides: {
+          core: {
+            postgres: {
+              image: overrideImage,
+            },
+          },
+        },
+      }
+
+      await expect(resolver.getPostgresImage(config)).rejects.toThrow(
+        `Explicitly requested image override is not available: ${overrideImage}`
+      )
+
+      expect(resolver.getResolvedImages()).toEqual({})
+    })
+
+    it('records the default image when no override is set', async () => {
+      (ImagePullChecker.verifyImagePull as jest.Mock).mockResolvedValue(true)
+      const config: PlatformConfig = {
+        platformOverrides: {
+          core: {},
+        },
+      }
+
+      await resolver.getPostgresImage(config)
+
+      expect(resolver.getResolvedImages()).toEqual({ [postgresImage]: postgresImage })
     })
   })
 })
