@@ -23,7 +23,7 @@ export class ImageResolver {
    * Get the resolved images recorded so far, keyed by logical image name.
    */
   getResolvedImages(): Record<string, string> {
-    return this.resolvedImages
+    return { ...this.resolvedImages }
   }
 
   /**
@@ -84,6 +84,7 @@ export class ImageResolver {
     const imageIsVerified = await this.verifyImage(imageName)
     if (imageIsVerified) {
       logger.success(`${LogMessages.IMAGE_VERIFY_SUCCESS}: ${imageName}`)
+      this.resolvedImages[imageName] = imageName
       return imageName
     }
 
@@ -91,6 +92,7 @@ export class ImageResolver {
     logger.warn(LogMessages.IMAGE_VERIFY_FAILED, `Image may not be available: ${imageName}`)
     logger.info(`${LogMessages.IMAGE_PULL_START}: Proceeding with unverified image ${imageName}`)
 
+    this.resolvedImages[imageName] = imageName
     return imageName
   }
 
@@ -119,7 +121,7 @@ export class ImageResolver {
     // No override requested: the default image is used deliberately.
     const imageIsVerified = await this.verifyImage(defaultImage)
     if (!imageIsVerified) {
-      logger.warn(LogMessages.IMAGE_VERIFY_FAILED, `${overrideImage} -> ${defaultImage}`)
+      logger.warn(LogMessages.IMAGE_VERIFY_FAILED, `Default image could not be verified: ${defaultImage}`)
     }
     this.resolvedImages[defaultImage] = defaultImage
     return defaultImage

@@ -329,7 +329,7 @@ describe('ImageResolver', () => {
       expect(result).toBe(serviceName)
       expect(ContainerImageOverrideMapper.getServiceImageOverride).toHaveBeenCalledWith(serviceName, config)
       expect(ImagePullChecker.verifyImagePull).toHaveBeenCalledWith(serviceName)
-      expect(warningMock).toHaveBeenCalledWith('IMAGE_VERIFY_FAILED', `${undefined} -> ${serviceName}`)
+      expect(warningMock).toHaveBeenCalledWith('IMAGE_VERIFY_FAILED', `Default image could not be verified: ${serviceName}`)
     })
   })
 
@@ -381,7 +381,7 @@ describe('ImageResolver', () => {
       expect(result).toBe(bffName)
       expect(ContainerImageOverrideMapper.getBffImageOverride).toHaveBeenCalledWith(bffName, config)
       expect(ImagePullChecker.verifyImagePull).toHaveBeenCalledWith(bffName)
-      expect(warningMock).toHaveBeenCalledWith('IMAGE_VERIFY_FAILED', `${undefined} -> ${bffName}`)
+      expect(warningMock).toHaveBeenCalledWith('IMAGE_VERIFY_FAILED', `Default image could not be verified: ${bffName}`)
     })
   })
 
@@ -433,7 +433,7 @@ describe('ImageResolver', () => {
       expect(result).toBe(uiName)
       expect(ContainerImageOverrideMapper.getUiImageOverride).toHaveBeenCalledWith(uiName, config)
       expect(ImagePullChecker.verifyImagePull).toHaveBeenCalledWith(uiName)
-      expect(warningMock).toHaveBeenCalledWith('IMAGE_VERIFY_FAILED', `${undefined} -> ${uiName}`)
+      expect(warningMock).toHaveBeenCalledWith('IMAGE_VERIFY_FAILED', `Default image could not be verified: ${uiName}`)
     })
   })
 
@@ -488,6 +488,28 @@ describe('ImageResolver', () => {
       await resolver.getPostgresImage(config)
 
       expect(resolver.getResolvedImages()).toEqual({ [postgresImage]: postgresImage })
+    })
+
+    it('records custom images resolved through getImage()', async () => {
+      (ImagePullChecker.verifyImagePull as jest.Mock).mockResolvedValueOnce(true).mockResolvedValueOnce(false)
+
+      await resolver.getImage('custom/verified:1')
+      await resolver.getImage('custom/unverified:1')
+
+      expect(resolver.getResolvedImages()).toEqual({
+        'custom/verified:1': 'custom/verified:1',
+        'custom/unverified:1': 'custom/unverified:1',
+      })
+    })
+
+    it('returns a copy that does not expose the internal map', async () => {
+      (ImagePullChecker.verifyImagePull as jest.Mock).mockResolvedValue(true)
+      await resolver.getImage('custom/image:1')
+
+      const images = resolver.getResolvedImages()
+      images['injected'] = 'injected'
+
+      expect(resolver.getResolvedImages()).toEqual({ 'custom/image:1': 'custom/image:1' })
     })
   })
 })

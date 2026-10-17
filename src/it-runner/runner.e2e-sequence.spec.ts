@@ -1,6 +1,7 @@
 import { PlatformRuntime } from '../lib/models/interfaces/platform-runtime.interface'
 import { E2eExecutionRecord } from '../lib/models/interfaces/e2e.interface'
-import { RunnerVersion } from '../lib/utils/runner-version'
+import * as fs from 'fs'
+import * as path from 'path'
 import { RunSummary } from './types/run-summary.interface'
 
 const ensureDirectoriesMock = jest.fn()
@@ -164,7 +165,10 @@ describe('IntegrationTestsRunner E2E sequencing', () => {
 
     const summary = writeSummaryMock.mock.calls[0][0] as RunSummary
     expect(summary.configPath).toBe('integration/platform.json')
-    expect(summary.runnerVersion).toBe(RunnerVersion.get())
+    const packageVersion = (
+      JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8')) as { version: string }
+    ).version
+    expect(summary.runnerVersion).toBe(packageVersion)
     expect(summary.resolvedImages).toEqual(resolvedImages)
   })
 
